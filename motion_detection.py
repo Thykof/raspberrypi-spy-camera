@@ -4,26 +4,16 @@
 # according to the terms of the GNU General Public License version 2, incorporated
 # herein by reference.
 
+# Modified by Thykof in 2022
+
 import cv2
-import picamera
 
-import numpy as np
-
+import sys
 from datetime import datetime
-import io
+import numpy as np
 
 import email_with_attatchements as email_helper
 
-
-def stream_to_opencv(stream):
-    # Construct a numpy array from the stream
-    data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-    # "Decode" the image from the array, preserving colour
-    image = cv2.imdecode(data, 1)
-    # OpenCV returns an array with data in BGR order. If you want RGB instead
-    # use the following...
-    #image = image[:, :, ::-1]
-    return image
 
 
 class MotionDetector():
@@ -35,23 +25,13 @@ class MotionDetector():
         self.NUM_MOTION_FRAMES = NUM_MOTION_FRAMES
         self.trigger_level = trigger_level
 
-        with picamera.PiCamera() as camera:
-            stream = io.BytesIO()
-            camera.framerate = 42.1
-            camera.resolution = (640, 480)
+        camera = cv2.VideoCapture(0)
 
+        if camera:
             motion = False
 
-            for foo in camera.capture_continuous(stream, format='jpeg'):
-                #start_time = datetime.now()
-
-                # Truncate the stream to the current position (in case
-                # prior iterations output a longer image)
-                stream.truncate()
-                stream.seek(0)
-
+            while True:
                 if not motion:
-
                     # save last image if it exists
                     try:
                         motion_images = []
@@ -60,7 +40,7 @@ class MotionDetector():
                         pass
 
                     # get latest image
-                    opencv_image = stream_to_opencv(stream)
+                    ret, opencv_image = camera.read() 
 
                     # detect motion
                     detection_level = self.detect_motion(opencv_image)
@@ -71,7 +51,7 @@ class MotionDetector():
                         print 'saving images...'
                         time_stamp = datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
                         motion_images.append(opencv_image)
-                        #
+                        
                         es = email_helper.EmailServer(username, password, smpt_server_url)
                         subject = 'MOTION CAPTURED!'
                         text = '''<b>Captured! {0}<br>
@@ -85,7 +65,7 @@ class MotionDetector():
                         alternative_text = 'pictures from motion detected'
                         es.create_email(subject, text, alternative_text)
                 elif motion:
-                    motion_images.append(stream_to_opencv(stream))
+                    motion_images.append(opencv_image)
 
                     if len(motion_images) >= NUM_MOTION_FRAMES:
                         for i, image in enumerate(motion_images):
@@ -97,7 +77,6 @@ class MotionDetector():
 
                         motion = False
                         motion_images = []
-                #print (datetime.now() - start_time).microseconds
 
     def detect_motion(self, image):
         resize_resolution = (640/8, 480/8)
@@ -136,23 +115,18 @@ class MotionDetector():
 
 
 def main():
-    ## change settings below: #################################################
-    send_email = 'email_to_send_images_to@gmail.com'  # where you want the email sent to
+    if len(sys.argv) < 4:
+        raise ValueError('wrong number of arguments')
+
+    send_email = sys.argv[1]  # where you want the email sent to
     # smpt server settings...
     smpt_server_url = 'smtp.gmail.com'
-    username = 'your_email@gmail.com'  # username of your smpt server
+    username = sys.argv[2]  # username of your smpt server
     # (password is entered at commandline)
     user_email = None  # if different from username (leave 'None' for gmail)
     # trigger level
     trigger_level = 10
-    ##########################################################################
-
-    import sys
-    if len(sys.argv) == 2:
-        # first argument is the filename, so ignore
-        password = sys.argv[1]
-    else:
-        raise ValueError('wrong number of arguments')
+    password = sys.argv[3]
 
     MotionDetector(send_email, username, password, smpt_server_url, user_email, trigger_level)
 
