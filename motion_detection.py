@@ -11,7 +11,7 @@ import cv2
 import sys
 from datetime import datetime
 import numpy as np
-
+import time
 import email_with_attatchements as email_helper
 
 
@@ -32,6 +32,7 @@ class MotionDetector():
 
             while True:
                 if not motion:
+                    time.sleep(0.5)
                     # save last image if it exists
                     try:
                         motion_images = []
@@ -95,7 +96,7 @@ class MotionDetector():
         return detection_level
 
     def refire_rate_limit(self, detection_level):
-        REFIRE_TIME = 30    # seconds
+        REFIRE_TIME = 6    # seconds
         # initialisation
         try:
             self.last_alarm_time
