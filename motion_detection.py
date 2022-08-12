@@ -20,7 +20,7 @@ class MotionDetector():
     def __init__(self, send_email, username, password, smpt_server_url, user_email=None, trigger_level=100):
         print 'initialising, please wait...'
 
-        NUM_MOTION_FRAMES = 6
+        NUM_MOTION_FRAMES = 2
 
         self.NUM_MOTION_FRAMES = NUM_MOTION_FRAMES
         self.trigger_level = trigger_level
@@ -58,10 +58,6 @@ class MotionDetector():
                         text = '''<b>Captured! {0}<br>
                                     <img src="cid:image0"><br><br>
                                     <img src="cid:image1"><br><br>
-                                    <img src="cid:image2"><br><br>
-                                    <img src="cid:image3"><br><br>
-                                    <img src="cid:image4"><br><br>
-                                    <img src="cid:image5"><br><br>
                                 '''.format(time_stamp)
                         alternative_text = 'pictures from motion detected'
                         es.create_email(subject, text, alternative_text)
@@ -96,7 +92,7 @@ class MotionDetector():
         return detection_level
 
     def refire_rate_limit(self, detection_level):
-        REFIRE_TIME = 6    # seconds
+        REFIRE_TIME = 16    # seconds
         # initialisation
         try:
             self.last_alarm_time
