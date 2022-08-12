@@ -31,8 +31,8 @@ class MotionDetector():
             motion = False
 
             while True:
+                time.sleep(1)
                 if not motion:
-                    time.sleep(0.5)
                     # save last image if it exists
                     try:
                         motion_images = []
