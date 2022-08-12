@@ -58,6 +58,7 @@ class MotionDetector():
                         text = '''<b>Captured! {0}<br>
                                     <img src="cid:image0"><br><br>
                                     <img src="cid:image1"><br><br>
+                                    <img src="cid:image2"><br><br>
                                 '''.format(time_stamp)
                         alternative_text = 'pictures from motion detected'
                         es.create_email(subject, text, alternative_text)
