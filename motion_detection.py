@@ -94,7 +94,7 @@ class MotionDetector():
         res1 = cv2.convertScaleAbs(self.avg1)
         difference = cv2.absdiff(res1, image)   # moving average - current_frame
         detection_level = np.sum(difference) / 1000
-        print "monitoring... " + detection_level
+        print "monitoring... " + str(detection_level)
 
         if detection_level > self.trigger_level:
             return True
