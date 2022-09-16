@@ -39,9 +39,9 @@ class MotionDetector():
         try:
             self.monitor()
         except Exception as e:
-            print(e)
+            print "error"
             # TODO: send email
-            pass
+            raise e
 
     def monitor(self):
         while True:
