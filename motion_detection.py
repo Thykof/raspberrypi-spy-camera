@@ -14,67 +14,67 @@ import numpy as np
 import time
 import email_with_attatchements as email_helper
 
-
+IDLE = "IDLE"
+ALERT = "ALERT"
 
 class MotionDetector():
-    def __init__(self, send_email, username, password, smpt_server_url, trigger_level=100):
+    def __init__(self, send_email, username, password, smpt_server_url, trigger_level=11, stack=5):
         print 'initialising, please wait...'
-
-        NUM_MOTION_FRAMES = 2
-
-        self.NUM_MOTION_FRAMES = NUM_MOTION_FRAMES
+        self.send_email = send_email
+        self.username = username
+        self.password = password
+        self. smpt_server_url = smpt_server_url
         self.trigger_level = trigger_level
+        self.stack = stack
 
-        camera = cv2.VideoCapture(0)
+        self.status = IDLE
 
-        if camera:
-            motion = False
+        self.camera = cv2.VideoCapture(0)
+                
+        self.es = email_helper.EmailServer(username, password, smpt_server_url)
 
-            while True:
-                time.sleep(1.5)
-                if not motion:
-                    # save last image if it exists
-                    try:
-                        motion_images = []
-                        motion_images.append(opencv_image)
-                    except:
-                        pass
+        self.motion_images = []
 
-                    # get latest image
-                    ret, opencv_image = camera.read() 
+    def start(self):
+        try:
+            self.monitor()
+        except:
+            # TODO: send email
+            pass
 
-                    # detect motion
-                    detection_level = self.detect_motion(opencv_image)
-                    motion = self.refire_rate_limit(detection_level)
+    def monitor(self):
+        while True:
+            # get latest image
+            _, opencv_image = camera.read() 
 
-                    if motion:
-                        print 'motion detected !'
-                        print 'saving images...'
-                        time_stamp = datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
-                        motion_images.append(opencv_image)
-                        
-                        es = email_helper.EmailServer(username, password, smpt_server_url)
-                        subject = 'MOTION CAPTURED!'
-                        text = '''<b>Captured! {0}<br>
-                                    <img src="cid:image0"><br><br>
-                                    <img src="cid:image1"><br><br>
-                                    <img src="cid:image2"><br><br>
-                                '''.format(time_stamp)
-                        alternative_text = 'pictures from motion detected'
-                        es.create_email(subject, text, alternative_text)
-                elif motion:
-                    motion_images.append(opencv_image)
+            # detect motion
+            motion = self.detect_motion(opencv_image)
 
-                    if len(motion_images) >= NUM_MOTION_FRAMES:
-                        for i, image in enumerate(motion_images):
-                            image_filename = '{0} frame {1}.png'.format(time_stamp, i)
-                            cv2.imwrite(image_filename, image)
-                            # send images as email
-                            es.attach_file_image(image_filename)
-                        es.send_email(send_email)
+            timestamp = datetime.now().strftime("%A, %d. %B %Y %I:%M%p")
 
-                        motion = False
-                        motion_images = []
+            if self.status == IDLE:
+                self.motion_images = [{'image': opencv_image, "timestamp": timestamp}]
+                if motion:
+                    print 'motion detected !'
+                    self.status = "ALERT"
+                    content = '<b>Captured! {0}<br>'
+                    for i in self.motion_images:
+                        content += '<img src="cid:image{0}"><br><br>'.format(i)
+                    content = content.format(timestamp)
+                    self.es.create_email('MOTION CAPTURED!', content, 'pictures from motion detected')
+
+            elif self.status == ALERT:
+                self.motion_images.append({'image': opencv_image, "timestamp": timestamp})
+                if (motion and len(self.motion_images) >= self.stack) or (not motion):
+                    for i, image_dict in enumerate(self.motion_images):
+                        image = image_dict['image']
+                        timestamp = image_dict['timestamp']
+                        image_filename = '{0} frame {1}.png'.format(timestamp, i)
+                        cv2.imwrite(image_filename, image)
+                        # send images as email
+                        self.es.attach_file_image(image_filename)
+                    self.es.send_email(self.send_email)
+                    self.motion_images = []
 
     def detect_motion(self, image):
         resize_resolution = (640/8, 480/8)
@@ -90,42 +90,26 @@ class MotionDetector():
         res1 = cv2.convertScaleAbs(self.avg1)
         difference = cv2.absdiff(res1, image)   # moving average - current_frame
         detection_level = np.sum(difference) / 1000
-        return detection_level
 
-    def refire_rate_limit(self, detection_level):
-        REFIRE_TIME = 16    # seconds
-        # initialisation
-        try:
-            self.last_alarm_time
-        except:
-            self.last_alarm_time = datetime.now()
-
-        current_time = datetime.now()
-        time_since_last_alarm = (current_time - self.last_alarm_time).seconds
-        if time_since_last_alarm > REFIRE_TIME:
-            print 'monitoring: level {0} (trigger level {1})'\
-                .format(detection_level, self.trigger_level)
-            if detection_level > self.trigger_level:
-                self.last_alarm_time = current_time
-                return True
-        else:
-            return False
-
+        if detection_level > self.trigger_level:
+            return True
+        return False
 
 def main():
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         raise ValueError('wrong number of arguments')
 
     send_email = sys.argv[1]  # where you want the email sent to
     # smpt server settings...
     smpt_server_url = 'smtp.gmail.com'
     username = sys.argv[2]  # username of your smpt server
-    # (password is entered at commandline)
-    # trigger level
-    trigger_level = 10
+    # password is entered at commandline
     password = sys.argv[3]
+    # trigger level
+    trigger_level = int(sys.argv[3]);
 
-    MotionDetector(send_email, username, password, smpt_server_url, trigger_level)
+    motion_detector = MotionDetector(send_email, username, password, smpt_server_url, trigger_level)
+    motion_detector.start()
 
 if __name__ == '__main__':
     main()
