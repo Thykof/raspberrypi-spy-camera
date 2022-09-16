@@ -17,7 +17,7 @@ import email_with_attatchements as email_helper
 
 
 class MotionDetector():
-    def __init__(self, send_email, username, password, smpt_server_url, user_email=None, trigger_level=100):
+    def __init__(self, send_email, username, password, smpt_server_url, trigger_level=100):
         print 'initialising, please wait...'
 
         NUM_MOTION_FRAMES = 2
@@ -121,12 +121,11 @@ def main():
     smpt_server_url = 'smtp.gmail.com'
     username = sys.argv[2]  # username of your smpt server
     # (password is entered at commandline)
-    user_email = None  # if different from username (leave 'None' for gmail)
     # trigger level
     trigger_level = 10
     password = sys.argv[3]
 
-    MotionDetector(send_email, username, password, smpt_server_url, user_email, trigger_level)
+    MotionDetector(send_email, username, password, smpt_server_url, trigger_level)
 
 if __name__ == '__main__':
     main()
