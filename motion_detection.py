@@ -38,14 +38,17 @@ class MotionDetector():
     def start(self):
         try:
             self.monitor()
-        except:
+        except Exception as e:
+            print(e)
             # TODO: send email
             pass
 
     def monitor(self):
         while True:
+            time.sleep(0.5)
+
             # get latest image
-            _, opencv_image = camera.read() 
+            _, opencv_image = self.camera.read() 
 
             # detect motion
             motion = self.detect_motion(opencv_image)
