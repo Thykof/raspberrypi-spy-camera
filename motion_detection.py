@@ -106,7 +106,7 @@ def main():
     # password is entered at commandline
     password = sys.argv[3]
     # trigger level
-    trigger_level = int(sys.argv[3]);
+    trigger_level = int(sys.argv[4]);
 
     motion_detector = MotionDetector(send_email, username, password, smpt_server_url, trigger_level)
     motion_detector.start()
