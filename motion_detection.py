@@ -59,15 +59,15 @@ class MotionDetector():
                 self.motion_images = [{'image': opencv_image, "timestamp": timestamp}]
                 if motion:
                     print 'motion detected !'
-                    self.status = "ALERT"
-                    content = '<b>Captured! {0}<br>'.format(timestamp)
-                    for i in self.motion_images:
-                        content += '<img src="cid:image{0}"><br><br>'.format(i)
-                    self.es.create_email('MOTION CAPTURED!', content, 'pictures from motion detected')
+                    self.status = ALERT
 
             elif self.status == ALERT:
                 self.motion_images.append({'image': opencv_image, "timestamp": timestamp})
                 if (motion and len(self.motion_images) >= self.stack) or (not motion):
+                    content = '<b>Captured! {0}<br>'.format(timestamp)
+                    for i in self.motion_images:
+                        content += '<img src="cid:image{0}"><br><br>'.format(i)
+                    self.es.create_email('MOTION CAPTURED!', content, 'pictures from motion detected')
                     for i, image_dict in enumerate(self.motion_images):
                         image = image_dict['image']
                         timestamp = image_dict['timestamp']
@@ -77,6 +77,8 @@ class MotionDetector():
                         self.es.attach_file_image(image_filename)
                     self.es.send_email(self.send_email)
                     self.motion_images = []
+                    self.status = IDLE
+                    print "mail sent"
 
     def detect_motion(self, image):
         print "monitoring..."
