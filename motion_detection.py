@@ -65,7 +65,7 @@ class MotionDetector():
                 self.motion_images.append({'image': opencv_image, "timestamp": timestamp})
                 if (motion and len(self.motion_images) >= self.stack) or (not motion):
                     content = '<b>Captured! {0}<br>'.format(timestamp)
-                    for i in range(self.motion_images):
+                    for i in range(len(self.motion_images)):
                         content += '<img src="cid:image{0}"><br><br>'.format(i)
                     self.es.create_email('MOTION CAPTURED!', content, 'pictures from motion detected')
                     for i, image_dict in enumerate(self.motion_images):
