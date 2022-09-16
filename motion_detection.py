@@ -60,10 +60,9 @@ class MotionDetector():
                 if motion:
                     print 'motion detected !'
                     self.status = "ALERT"
-                    content = '<b>Captured! {0}<br>'
+                    content = '<b>Captured! {0}<br>'.format(timestamp)
                     for i in self.motion_images:
                         content += '<img src="cid:image{0}"><br><br>'.format(i)
-                    content = content.format(timestamp)
                     self.es.create_email('MOTION CAPTURED!', content, 'pictures from motion detected')
 
             elif self.status == ALERT:
@@ -80,6 +79,7 @@ class MotionDetector():
                     self.motion_images = []
 
     def detect_motion(self, image):
+        print "monitoring..."
         resize_resolution = (640/8, 480/8)
         image = cv2.resize(image, resize_resolution)   # reduce image size
 
