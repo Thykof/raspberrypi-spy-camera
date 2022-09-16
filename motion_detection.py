@@ -81,7 +81,6 @@ class MotionDetector():
                     print "mail sent"
 
     def detect_motion(self, image):
-        print "monitoring..."
         resize_resolution = (640/8, 480/8)
         image = cv2.resize(image, resize_resolution)   # reduce image size
 
@@ -95,6 +94,7 @@ class MotionDetector():
         res1 = cv2.convertScaleAbs(self.avg1)
         difference = cv2.absdiff(res1, image)   # moving average - current_frame
         detection_level = np.sum(difference) / 1000
+        print "monitoring... " + detection_level
 
         if detection_level > self.trigger_level:
             return True
